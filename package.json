@@ -1,0 +1,24 @@
+{
+  "name": "fit-to-fitbit",
+  "version": "1.0.0",
+  "description": "Copies Google Fit steps and calories to Fitbit",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/werdnanoslen/fit-to-fitbit.git"
+  },
+  "author": "Andrew Nelson <andy@andyhub.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/werdnanoslen/fit-to-fitbit/issues"
+  },
+  "homepage": "https://github.com/werdnanoslen/fit-to-fitbit#readme",
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "express": "^4.16.2",
+    "fitbit-node": "^2.0.5"
+  }
+}
