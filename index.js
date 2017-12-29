@@ -124,7 +124,7 @@ app.get('/', function (req, res) {
           }
           distance *= 0.000621371192 //convert to miles
           console.log('distance: ', distance)
-/
+
           res.redirect(fbClient.getAuthorizeUrl('activity', '/fbCallback'))
         })
       })
