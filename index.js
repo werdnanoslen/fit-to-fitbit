@@ -39,16 +39,16 @@ var GAuth = google.auth.OAuth2
 var gClient = new GAuth(
   process.env.G_CLIENT_ID,
   process.env.G_CLIENT_SECRET,
-  '/'
+  '/gCallback'
 )
 
 // redirect the user to the Fitbit authorization page
-app.get('/gAuthorize', function (req, res) {
+app.get('/', function (req, res) {
   // request access to the user's activity scope
   res.redirect(gClient.generateAuthUrl({scope: scopes}))
 })
 
-app.get('/', function (req, res) {
+app.get('/gCallback', function (req, res) {
   gClient.getToken(req.query.code, function (err, tokens) {
     // Tokens contains an access_token and an optional refresh_token. Save them.
     if (err) {
