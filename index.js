@@ -22,6 +22,7 @@ var startTimeString = startTime.getFullYear() + '-' + (startTime.getMonth() + 1)
 // initialize the express application
 var express = require('express')
 var app = express()
+var server
 
 // initialize the Fitbit API client
 var FitbitApiClient = require('fitbit-node')
@@ -153,6 +154,7 @@ app.get('/fbCallback', function (req, res) {
     // }
     fbClient.post('/activities.json', result.access_token, stepsBody).then(function (results) {
       res.send(results[0])
+      server.close()
     })
   }).catch(function (error) {
     res.send(error)
@@ -160,4 +162,4 @@ app.get('/fbCallback', function (req, res) {
 })
 
 // launch the server
-app.listen(process.env.PORT)
+server = app.listen(process.env.PORT)
