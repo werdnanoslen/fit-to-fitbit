@@ -4,7 +4,7 @@
   "description": "Copies Google Fit steps and calories to Fitbit",
   "main": "index.js",
   "scripts": {
-    "start": "index.js"
+    "start": "node index.js"
   },
   "repository": {
     "type": "git",
