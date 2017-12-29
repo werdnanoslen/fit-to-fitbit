@@ -39,7 +39,7 @@ var GAuth = google.auth.OAuth2
 var gClient = new GAuth(
   process.env.G_CLIENT_ID,
   process.env.G_CLIENT_SECRET,
-  '/gCallback'
+  'http://localhost:8080/gCallback'
 )
 
 // redirect the user to the Fitbit authorization page
@@ -73,7 +73,6 @@ app.get('/gCallback', function (req, res) {
         return console.error('steps failed:', err);
       }
       steps = body.bucket[0].dataset[0].point[0].value[0].intVal
-      console.log('steps: ', steps)
 
       var caloriesBody = {
         aggregateBy: [{
@@ -98,7 +97,6 @@ app.get('/gCallback', function (req, res) {
             calories += buckets[i].dataset[0].point[0].value[0].fpVal
           }
         }
-        console.log('calories: ', calories)
 
         var distanceBody = {
           aggregateBy: [{
@@ -123,9 +121,9 @@ app.get('/gCallback', function (req, res) {
             }
           }
           distance *= 0.000621371192 //convert to miles
-          console.log('distance: ', distance)
 
-          res.redirect(fbClient.getAuthorizeUrl('activity', '/fbCallback'))
+          var fbUrl = req.protocol + '://' + req.get('host') + '/fbCallback'
+          res.redirect(fbClient.getAuthorizeUrl('activity', fbUrl))
         })
       })
     })
@@ -135,7 +133,8 @@ app.get('/gCallback', function (req, res) {
 // handle the callback from the Fitbit authorization flow
 app.get('/fbCallback', function (req, res) {
   // exchange the authorization code we just received for an access token
-  fbClient.getAccessToken(req.query.code, '/fbCallback').then(function (result) {
+  var fbUrl = req.protocol + '://' + req.get('host') + '/fbCallback'
+  fbClient.getAccessToken(req.query.code, fbUrl).then(function (result) {
     var stepsBody = {
       activityId: 17190, // https://dev.fitbit.com/reference/web-api/explore/#/Activity/activity6
       date: startTimeString,
