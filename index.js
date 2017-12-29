@@ -35,16 +35,16 @@ var scopes = [
   'https://www.googleapis.com/auth/fitness.location.read'
 ]
 var gUrl = 'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate'
-var GAuth = google.auth.OAuth2
-var gClient = new GAuth(
-  process.env.G_CLIENT_ID,
-  process.env.G_CLIENT_SECRET,
-  'http://localhost:8080/gCallback'
-)
+var gClient
 
 // redirect the user to the Fitbit authorization page
 app.get('/', function (req, res) {
   // request access to the user's activity scope
+  gClient = new google.auth.OAuth2(
+    process.env.G_CLIENT_ID,
+    process.env.G_CLIENT_SECRET,
+    req.protocol + '://' + req.get('host') + '/gCallback'
+  )
   res.redirect(gClient.generateAuthUrl({scope: scopes}))
 })
 
