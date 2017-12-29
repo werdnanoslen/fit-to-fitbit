@@ -1,4 +1,5 @@
 require('dotenv').config()
+var request = require('request')
 
 // Data vars
 var steps = 0
@@ -28,6 +29,7 @@ var fbClient = new FitbitApiClient(process.env.FB_CLIENT_ID, process.env.FB_CLIE
 // initialize the Google API client
 var google = require('googleapis')
 var gFit = google.fitness('v1')
+var gUrl = 'https://www.googleapis.com/fitness/v1/users/me/dataset:aggregate'
 var GAuth = google.auth.OAuth2
 var gClient = new GAuth(
   process.env.G_CLIENT_ID,
@@ -44,63 +46,58 @@ app.get('/gAuthorize', function (req, res) {
 app.get('/gCallback', function (req, res) {
   gClient.getToken(req.query.code, function (err, tokens) {
     // Tokens contains an access_token and an optional refresh_token. Save them.
-    if (!err) {
-      gClient.credentials = tokens
-      var stepsBody = {
+    if (err) {
+      return console.error('token failed:', err);
+    }
+    gClient.credentials = tokens
+    var auth = {
+      'bearer': tokens.access_token
+    }
+    var stepsBody = {
+      aggregateBy: [{
+        dataSourceId: 'derived:com.google.step_count.delta:com.google.android.gms:estimated_steps',
+        dataTypeName: 'com.google.step_count.delta'
+      }],
+      bucketByTime: {
+        durationMillis: millisInADay
+      },
+      startTimeMillis: startTimeMillis,
+      endTimeMillis: endTimeMillis
+    }
+    request.post({url: gUrl, auth: auth, json: stepsBody}, function (err, httpResponse, body) {
+      if (err) {
+        return console.error('steps failed:', err);
+      }
+      steps = body.bucket[0].dataset[0].point[0].value[0].intVal
+      console.log(steps)
+
+      var caloriesBody = {
         aggregateBy: [{
-          dataSourceId: 'derived:com.google.step_count.delta:com.google.android.gms:estimated_steps',
-          dataTypeName: 'com.google.step_count.delta'
+          dataTypeName: 'com.google.calories.expended'
         }],
-        bucketByTime: {
-          durationMillis: millisInADay
+        bucketByActivityType: {
+          minDurationMillis: 0
         },
         startTimeMillis: startTimeMillis,
         endTimeMillis: endTimeMillis
       }
-      gFit.users.dataset.aggregate({
-        userId: 'me',
-        auth: gClient,
-        body: stepsBody
-      }, function (err, res) {
-        if (!err) {
-          steps = res.bucket[0].dataset[0].point[0].value[0].intVal
-          console.log(steps)
 
-          var caloriesBody = {
-            aggregateBy: [{
-              dataTypeName: 'com.google.calories.expended'
-            }],
-            bucketByActivityType: {
-              minDurationMillis: 0
-            },
-            startTimeMillis: startTimeMillis,
-            endTimeMillis: endTimeMillis
-          }
-
-          gFit.users.dataset.aggregate({
-            userId: 'me',
-            auth: gClient,
-            body: caloriesBody
-          }, function (err, res) {
-            if (!err) {
-              var buckets = res.bucket
-              for (var i = 0; i < buckets.length; ++i) {
-                var activity = buckets[i].activity
-                if (activity !== 3) { // https://developers.google.com/fit/rest/v1/reference/activity-types
-                  calories += buckets[i].dataset[0].point[0].value[0].fpVal
-                }
-              }
-              console.log(calories)
-              res.redirect(fbClient.getAuthorizeUrl('activity', process.env.FB_CALLBACK_URL))
-            } else {
-              console.error(err)
-            }
-          })
-        } else {
-          console.error(err)
+      request.post({url: gUrl, auth: auth, json: caloriesBody}, function (err, httpResponse, body) {
+        if (err) {
+          return console.error('calories failed:', err);
         }
+
+        var buckets = body.bucket
+        for (var i = 0; i < buckets.length; ++i) {
+          var activity = buckets[i].activity
+          if (activity !== 3) { // https://developers.google.com/fit/rest/v1/reference/activity-types
+            calories += buckets[i].dataset[0].point[0].value[0].fpVal
+          }
+        }
+        console.log(calories)
+        res.redirect(fbClient.getAuthorizeUrl('activity', process.env.FB_CALLBACK_URL))
       })
-    }
+    })
   })
 })
 
